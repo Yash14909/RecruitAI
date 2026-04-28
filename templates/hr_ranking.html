@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Rankings — {{ job.title }}{% endblock %}
+{% block extra_css %}
+.rank-row { transition: background .2s; }
+.rank-row:hover td { background: rgba(59,130,246,.04); }
+.podium { font-size: 1.5rem; }
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div style="margin-bottom:1.5rem"><a href="{{ url_for('hr_posts') }}" style="color:var(--muted);text-decoration:none">← Back to Posts</a></div>
+  <div class="page-header">
+    <div class="page-title">🏆 AI Candidate Ranking</div>
+    <div class="page-sub">{{ job.title }} — {{ job.company }}</div>
+  </div>
+
+  {% if ranked %}
+  <!-- TOP 3 PODIUM -->
+  {% if ranked|length >= 3 %}
+  <div style="display:flex;justify-content:center;gap:1.5rem;margin-bottom:2.5rem;flex-wrap:wrap">
+    {% for i in [1,0,2] %}
+    {% if loop.index0 < ranked|length %}
+    {% set r = ranked[i] %}
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;text-align:center;min-width:180px;
+      {% if i==0 %}border-color:#ffd700;box-shadow:0 0 30px rgba(255,215,0,.2);order:0{% elif i==1 %}order:-1{% else %}order:1{% endif %}">
+      <div style="font-size:2rem;margin-bottom:.5rem">{% if i==0 %}🥇{% elif i==1 %}🥈{% else %}🥉{% endif %}</div>
+      <div style="font-weight:700;font-size:1rem">{{ r.name }}</div>
+      <div style="color:var(--muted);font-size:.8rem">{{ r.email }}</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;margin:.5rem 0;color:{% if r.ai_score>=70 %}var(--success){% elif r.ai_score>=40 %}var(--warning){% else %}var(--danger){% endif %}">{{ r.ai_score }}%</div>
+      <div style="display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap">
+        <a href="{{ url_for('hr_view_candidate', user_id=r.user_id) }}" class="btn btn-ghost btn-sm">Profile</a>
+        <a href="{{ url_for('update_status', app_id=r.id, status='shortlisted') }}" class="btn btn-success btn-sm">Shortlist</a>
+      </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Rank</th><th>Candidate</th><th>AI Match Score</th><th>Breakdown</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for r in ranked %}
+      <tr class="rank-row">
+        <td>
+          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;
+            {% if loop.index==1 %}color:#ffd700{% elif loop.index==2 %}color:#c0c0c0{% elif loop.index==3 %}color:#cd7f32{% else %}color:var(--muted){% endif %}">
+            {% if loop.index<=3 %}{% if loop.index==1 %}🥇{% elif loop.index==2 %}🥈{% else %}🥉{% endif %}{% else %}#{{ loop.index }}{% endif %}
+          </span>
+        </td>
+        <td>
+          <div style="font-weight:600">{{ r.name }}</div>
+          <div style="color:var(--muted);font-size:.78rem">{{ r.email }}</div>
+          <div style="color:var(--muted);font-size:.78rem">{{ r.mobile }}</div>
+        </td>
+        <td>
+          <div style="font-weight:800;font-size:1.3rem;color:{% if r.ai_score>=70 %}var(--success){% elif r.ai_score>=40 %}var(--warning){% else %}var(--danger){% endif %}">{{ r.ai_score }}%</div>
+          <div class="score-bar" style="width:100px;margin-top:.4rem"><div class="score-fill {% if r.ai_score>=70 %}score-high{% elif r.ai_score>=40 %}score-mid{% else %}score-low{% endif %}" style="width:{{ r.ai_score }}%"></div></div>
+        </td>
+        <td style="font-size:.78rem;color:var(--muted);max-width:220px;line-height:1.6">{{ r.ai_feedback }}</td>
+        <td><span class="badge {% if r.status=='applied' %}badge-blue{% elif r.status=='shortlisted' %}badge-green{% elif r.status=='rejected' %}badge-red{% else %}badge-purple{% endif %}">{{ r.status|capitalize }}</span></td>
+        <td>
+          <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+            <a href="{{ url_for('hr_view_candidate', user_id=r.user_id) }}" class="btn btn-ghost btn-sm">Profile</a>
+            <a href="{{ url_for('update_status', app_id=r.id, status='shortlisted') }}" class="btn btn-success btn-sm">✓</a>
+            <a href="{{ url_for('update_status', app_id=r.id, status='hired') }}" class="btn btn-primary btn-sm">Hire</a>
+            <a href="{{ url_for('update_status', app_id=r.id, status='rejected') }}" class="btn btn-danger btn-sm">✕</a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div></div>
+
+  <div style="margin-top:1.5rem;padding:1rem;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border);font-size:.85rem;color:var(--muted)">
+    ℹ️ <strong>AI Scoring Breakdown:</strong> Skills match (40%) + Education level (30%) + Work experience (30%). Scores above 70% indicate strong matches.
+  </div>
+  {% else %}
+    <div class="empty card" style="padding:4rem"><div class="empty-icon">📭</div><div class="empty-text">No applications yet for this job post.</div></div>
+  {% endif %}
+</div>
+{% endblock %}

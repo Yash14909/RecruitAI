@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Resume — {{ user.name }}</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#fff;color:#1a1a2e;line-height:1.5;font-size:14px}
+.resume{max-width:900px;margin:0 auto;padding:40px}
+.header{display:grid;grid-template-columns:1fr auto;gap:2rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:3px solid #1e40af}
+.name{font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;color:#1e40af;line-height:1.1}
+.title-bar{font-size:1rem;color:#64748b;margin-top:.3rem}
+.contact{font-size:.85rem;color:#475569;display:flex;flex-direction:column;gap:.2rem;text-align:right}
+.contact a{color:#1e40af;text-decoration:none}
+.section{margin-bottom:1.8rem}
+.section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;text-transform:uppercase;letter-spacing:.1em;color:#1e40af;border-left:4px solid #1e40af;padding-left:.7rem;margin-bottom:1rem}
+.edu-item,.exp-item{margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid #f1f5f9}
+.edu-item:last-child,.exp-item:last-child{border-bottom:none;margin-bottom:0}
+.item-title{font-weight:600;color:#1e293b}
+.item-sub{color:#64748b;font-size:.88rem}
+.item-desc{font-size:.9rem;color:#475569;margin-top:.3rem}
+.skills-wrap{display:flex;flex-wrap:wrap;gap:.5rem}
+.skill-chip{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:99px;padding:.2rem .75rem;font-size:.82rem;font-weight:500}
+.skill-chip.expert{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+.skill-chip.intermediate{background:#eff6ff;border-color:#bfdbfe;color:#1e40af}
+.cert-item{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #f1f5f9}
+.cert-item:last-child{border-bottom:none}
+.bio{color:#475569;font-size:.92rem;line-height:1.6;margin-bottom:1.5rem}
+.print-btn{position:fixed;bottom:2rem;right:2rem;background:#1e40af;color:#fff;border:none;padding:.75rem 1.5rem;border-radius:99px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.9rem;cursor:pointer;box-shadow:0 4px 20px rgba(30,64,175,.4)}
+@media print{.print-btn{display:none}body{padding:0}.resume{padding:20px}}
+</style>
+</head>
+<body>
+<div class="resume">
+  <div class="header">
+    <div>
+      <div class="name">{{ user.name }}</div>
+      {% if experience %}<div class="title-bar">{{ experience[0].role }} {% if experience[0].company %}at {{ experience[0].company }}{% endif %}</div>{% endif %}
+      {% if profile and profile.bio %}<p class="bio" style="margin-top:.5rem">{{ profile.bio }}</p>{% endif %}
+    </div>
+    <div class="contact">
+      <span>📧 {{ user.email }}</span>
+      <span>📱 {{ user.mobile }}</span>
+      {% if profile %}
+        {% if profile.location %}<span>📍 {{ profile.location }}</span>{% endif %}
+        {% if profile.linkedin %}<a href="{{ profile.linkedin }}">LinkedIn</a>{% endif %}
+        {% if profile.github %}<a href="{{ profile.github }}">GitHub</a>{% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  {% if skills %}
+  <div class="section">
+    <div class="section-title">Skills</div>
+    <div class="skills-wrap">
+      {% for s in skills %}
+        <span class="skill-chip {{ s.level|lower }}">{{ s.skill_name }} <span style="opacity:.6">({{ s.level }})</span></span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if education %}
+  <div class="section">
+    <div class="section-title">Education</div>
+    {% for e in education %}
+    <div class="edu-item">
+      <div class="item-title">{{ e.degree }}</div>
+      <div class="item-sub">{{ e.institution }} | {{ e.year_start }} – {{ e.year_end }}{% if e.grade %} | Grade: {{ e.grade }}{% endif %}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if experience %}
+  <div class="section">
+    <div class="section-title">Work Experience</div>
+    {% for e in experience %}
+    <div class="exp-item">
+      <div class="item-title">{{ e.role }}</div>
+      <div class="item-sub">{{ e.company }} | {{ e.year_start }} – {{ e.year_end }}</div>
+      {% if e.description %}<div class="item-desc">{{ e.description }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if certificates %}
+  <div class="section">
+    <div class="section-title">Certifications</div>
+    {% for c in certificates %}
+    <div class="cert-item">
+      <span class="item-title">🏅 {{ c.cert_name }}</span>
+      <span class="item-sub">{{ c.issuer }} · {{ c.year }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+<button class="print-btn" onclick="window.print()">🖨 Print / Save PDF</button>
+</body>
+</html>

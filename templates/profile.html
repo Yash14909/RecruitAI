@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% block title %}My Profile — RecruitAI{% endblock %}
+{% block extra_css %}
+.tab-bar { display: flex; gap: .3rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; overflow-x: auto; }
+.tab-btn { padding: .6rem 1.2rem; border: none; background: none; color: var(--muted); font-family: 'DM Sans',sans-serif;
+  font-size: .9rem; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; transition: all .2s; }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+.tab-content { display: none; } .tab-content.active { display: block; }
+.section-add { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div class="page-title">My Profile</div>
+      <div class="page-sub">Build a complete profile to increase your match scores</div>
+    </div>
+    <div style="display:flex;gap:.7rem">
+      <a href="{{ url_for('view_resume', user_id=session.user_id) }}" target="_blank" class="btn btn-primary">📄 View Resume</a>
+    </div>
+  </div>
+
+  <div class="layout-sidebar">
+    <!-- SIDEBAR -->
+    <div>
+      <div class="card" style="text-align:center;margin-bottom:1.2rem">
+        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 1rem;font-family:'Syne',sans-serif;font-weight:800;color:#fff">
+          {{ user.name[0]|upper }}</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem">{{ user.name }}</div>
+        <div style="color:var(--muted);font-size:.85rem;margin:.3rem 0">{{ user.email }}</div>
+        <div style="color:var(--muted);font-size:.85rem">📱 {{ user.mobile }}</div>
+        {% if profile %}
+          {% if profile.location %}<div style="margin-top:.5rem;font-size:.85rem">📍 {{ profile.location }}</div>{% endif %}
+          {% if profile.linkedin %}<a href="{{ profile.linkedin }}" target="_blank" style="color:var(--primary);font-size:.82rem;display:block;margin-top:.3rem">LinkedIn ↗</a>{% endif %}
+          {% if profile.github %}<a href="{{ profile.github }}" target="_blank" style="color:var(--accent);font-size:.82rem;display:block;margin-top:.2rem">GitHub ↗</a>{% endif %}
+          {% if profile.bio %}<p style="margin-top:1rem;font-size:.88rem;color:var(--muted);text-align:left">{{ profile.bio }}</p>{% endif %}
+        {% endif %}
+      </div>
+
+      <!-- Quick stats -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:1rem">Profile Completion</div>
+        {% set total = 4 %}
+        {% set done = (education|length > 0)|int + (experience|length > 0)|int + (skills|length > 0)|int + (certificates|length > 0)|int %}
+        {% set pct = (done / total * 100)|int %}
+        <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.4rem"><span>{{ pct }}% Complete</span><span style="color:var(--muted)">{{ done }}/{{ total }}</span></div>
+        <div class="score-bar"><div class="score-fill {% if pct>=75 %}score-high{% elif pct>=40 %}score-mid{% else %}score-low{% endif %}" style="width:{{ pct }}%"></div></div>
+        <div style="margin-top:1rem;display:flex;flex-direction:column;gap:.4rem;font-size:.85rem">
+          <div>{% if education %}✅{% else %}⬜{% endif %} Education</div>
+          <div>{% if experience %}✅{% else %}⬜{% endif %} Experience</div>
+          <div>{% if skills %}✅{% else %}⬜{% endif %} Skills</div>
+          <div>{% if certificates %}✅{% else %}⬜{% endif %} Certificates</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="card">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="showTab('about')">About</button>
+        <button class="tab-btn" onclick="showTab('education')">Education ({{ education|length }})</button>
+        <button class="tab-btn" onclick="showTab('experience')">Experience ({{ experience|length }})</button>
+        <button class="tab-btn" onclick="showTab('skills')">Skills ({{ skills|length }})</button>
+        <button class="tab-btn" onclick="showTab('certs')">Certificates ({{ certificates|length }})</button>
+      </div>
+
+      <!-- ABOUT -->
+      <div id="tab-about" class="tab-content active">
+        <div class="card-title" style="margin-bottom:1.2rem">About Me</div>
+        <form method="POST">
+          <div class="form-group"><label class="form-label">Bio</label>
+            <textarea name="bio" class="form-control" placeholder="Tell employers about yourself...">{{ profile.bio if profile else '' }}</textarea></div>
+          <div class="grid-2">
+            <div class="form-group"><label class="form-label">Location</label>
+              <input name="location" class="form-control" placeholder="City, State" value="{{ profile.location if profile else '' }}"></div>
+            <div class="form-group"><label class="form-label">LinkedIn URL</label>
+              <input name="linkedin" class="form-control" placeholder="https://linkedin.com/in/..." value="{{ profile.linkedin if profile else '' }}"></div>
+          </div>
+          <div class="form-group"><label class="form-label">GitHub URL</label>
+            <input name="github" class="form-control" placeholder="https://github.com/..." value="{{ profile.github if profile else '' }}"></div>
+          <button class="btn btn-primary">Save Profile</button>
+        </form>
+      </div>
+
+      <!-- EDUCATION -->
+      <div id="tab-education" class="tab-content">
+        <div class="card-title" style="margin-bottom:1.2rem">Education</div>
+        {% if education %}
+          <div class="timeline">{% for e in education %}
+            <div class="timeline-item">
+              <div style="display:flex;justify-content:space-between">
+                <div>
+                  <div class="timeline-title">{{ e.degree }}</div>
+                  <div class="timeline-sub">{{ e.institution }}</div>
+                  <div class="timeline-sub">{{ e.year_start }} – {{ e.year_end }} {% if e.grade %}| Grade: {{ e.grade }}{% endif %}</div>
+                </div>
+                <a href="{{ url_for('delete_item', table='education', rid=e.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">✕</a>
+              </div>
+            </div>
+          {% endfor %}</div>
+        {% else %}<div class="empty"><div class="empty-icon">🎓</div><div class="empty-text">No education added yet</div></div>{% endif %}
+        <div class="section-add">
+          <div style="font-weight:600;margin-bottom:1rem">+ Add Education</div>
+          <form action="{{ url_for('add_education') }}" method="POST">
+            <div class="grid-2">
+              <div class="form-group"><label class="form-label">Degree</label><input name="degree" class="form-control" placeholder="B.Tech Computer Science" required></div>
+              <div class="form-group"><label class="form-label">Institution</label><input name="institution" class="form-control" placeholder="IIT Bombay" required></div>
+              <div class="form-group"><label class="form-label">Year Start</label><input name="year_start" class="form-control" placeholder="2019" required></div>
+              <div class="form-group"><label class="form-label">Year End</label><input name="year_end" class="form-control" placeholder="2023" required></div>
+            </div>
+            <div class="form-group"><label class="form-label">Grade/CGPA</label><input name="grade" class="form-control" placeholder="8.5 CGPA"></div>
+            <button class="btn btn-primary">Add Education</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- EXPERIENCE -->
+      <div id="tab-experience" class="tab-content">
+        <div class="card-title" style="margin-bottom:1.2rem">Work Experience</div>
+        {% if experience %}
+          <div class="timeline">{% for e in experience %}
+            <div class="timeline-item">
+              <div style="display:flex;justify-content:space-between">
+                <div>
+                  <div class="timeline-title">{{ e.role }}</div>
+                  <div class="timeline-sub">{{ e.company }} | {{ e.year_start }} – {{ e.year_end }}</div>
+                  {% if e.description %}<div class="timeline-desc">{{ e.description }}</div>{% endif %}
+                </div>
+                <a href="{{ url_for('delete_item', table='experience', rid=e.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">✕</a>
+              </div>
+            </div>
+          {% endfor %}</div>
+        {% else %}<div class="empty"><div class="empty-icon">💼</div><div class="empty-text">No experience added yet</div></div>{% endif %}
+        <div class="section-add">
+          <div style="font-weight:600;margin-bottom:1rem">+ Add Experience</div>
+          <form action="{{ url_for('add_experience') }}" method="POST">
+            <div class="grid-2">
+              <div class="form-group"><label class="form-label">Company</label><input name="company" class="form-control" placeholder="Google" required></div>
+              <div class="form-group"><label class="form-label">Role</label><input name="role" class="form-control" placeholder="Software Engineer" required></div>
+              <div class="form-group"><label class="form-label">Year Start</label><input name="year_start" class="form-control" placeholder="2022" required></div>
+              <div class="form-group"><label class="form-label">Year End</label><input name="year_end" class="form-control" placeholder="Present" required></div>
+            </div>
+            <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-control" placeholder="Describe your responsibilities..."></textarea></div>
+            <button class="btn btn-primary">Add Experience</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- SKILLS -->
+      <div id="tab-skills" class="tab-content">
+        <div class="card-title" style="margin-bottom:1.2rem">Skills</div>
+        {% if skills %}
+          <div style="margin-bottom:1.5rem">{% for s in skills %}
+            <span class="skill-tag" style="margin-bottom:.3rem">
+              <span class="skill-dot dot-{{ s.level|lower }}"></span>{{ s.skill_name }}
+              <span class="badge {% if s.level=='Expert' %}badge-green{% elif s.level=='Intermediate' %}badge-blue{% else %}badge-yellow{% endif %}" style="margin-left:.2rem">{{ s.level }}</span>
+              <a href="{{ url_for('delete_item', table='skills', rid=s.id) }}" style="color:var(--danger);margin-left:.3rem;font-size:.8rem" onclick="return confirm('Delete?')">✕</a>
+            </span>
+          {% endfor %}</div>
+        {% else %}<div class="empty"><div class="empty-icon">🧩</div><div class="empty-text">No skills added yet</div></div>{% endif %}
+        <div class="section-add">
+          <div style="font-weight:600;margin-bottom:1rem">+ Add Skill</div>
+          <form action="{{ url_for('add_skill') }}" method="POST" style="display:flex;gap:1rem;flex-wrap:wrap">
+            <div class="form-group" style="flex:1;min-width:180px"><label class="form-label">Skill Name</label><input name="skill_name" class="form-control" placeholder="Python, React, SQL..." required></div>
+            <div class="form-group" style="min-width:150px"><label class="form-label">Level</label>
+              <select name="level" class="form-control">
+                <option>Beginner</option><option>Intermediate</option><option>Expert</option>
+              </select></div>
+            <div style="align-self:flex-end;margin-bottom:1.1rem"><button class="btn btn-primary">Add</button></div>
+          </form>
+        </div>
+      </div>
+
+      <!-- CERTIFICATES -->
+      <div id="tab-certs" class="tab-content">
+        <div class="card-title" style="margin-bottom:1.2rem">Certifications</div>
+        {% if certificates %}
+          <div style="display:grid;gap:.8rem;margin-bottom:1.5rem">{% for c in certificates %}
+            <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);padding:1rem;border-radius:var(--radius-sm);border:1px solid var(--border)">
+              <div>
+                <div style="font-weight:600">🏅 {{ c.cert_name }}</div>
+                <div style="color:var(--muted);font-size:.85rem">{{ c.issuer }} · {{ c.year }}</div>
+              </div>
+              <a href="{{ url_for('delete_item', table='certificates', rid=c.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">✕</a>
+            </div>
+          {% endfor %}</div>
+        {% else %}<div class="empty"><div class="empty-icon">🏅</div><div class="empty-text">No certificates added yet</div></div>{% endif %}
+        <div class="section-add">
+          <div style="font-weight:600;margin-bottom:1rem">+ Add Certificate</div>
+          <form action="{{ url_for('add_certificate') }}" method="POST">
+            <div class="grid-2">
+              <div class="form-group"><label class="form-label">Certificate Name</label><input name="cert_name" class="form-control" placeholder="AWS Solutions Architect" required></div>
+              <div class="form-group"><label class="form-label">Issuer</label><input name="issuer" class="form-control" placeholder="Amazon Web Services" required></div>
+            </div>
+            <div class="form-group"><label class="form-label">Year</label><input name="year" class="form-control" placeholder="2023" required></div>
+            <button class="btn btn-primary">Add Certificate</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+function showTab(name){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.target.classList.add('active');
+}
+{% endblock %}

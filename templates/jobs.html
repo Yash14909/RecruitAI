@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Browse Jobs — RecruitAI{% endblock %}
+{% block extra_css %}
+.search-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1.5rem; display: flex; gap: .8rem; flex-wrap: wrap; }
+.jobs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.2rem; }
+.job-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem;
+  display: flex; flex-direction: column; gap: .7rem; transition: transform .2s, border-color .2s; }
+.job-card:hover { transform: translateY(-2px); border-color: var(--primary); box-shadow: 0 8px 30px rgba(59,130,246,.1); }
+.job-card.applied { border-color: var(--success); }
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <div class="page-title">Browse Jobs</div>
+    <div class="page-sub">Find opportunities that match your skills and experience</div>
+  </div>
+
+  <form class="search-bar" method="GET">
+    <input name="q" class="form-control" style="flex:2;min-width:180px" placeholder="🔍 Search jobs or skills..." value="{{ q }}">
+    <input name="loc" class="form-control" style="flex:1;min-width:130px" placeholder="📍 Location" value="{{ loc }}">
+    <select name="jtype" class="form-control" style="min-width:130px">
+      <option value="">All Types</option>
+      <option {% if jtype=='Full-time' %}selected{% endif %}>Full-time</option>
+      <option {% if jtype=='Part-time' %}selected{% endif %}>Part-time</option>
+      <option {% if jtype=='Contract' %}selected{% endif %}>Contract</option>
+      <option {% if jtype=='Internship' %}selected{% endif %}>Internship</option>
+      <option {% if jtype=='Remote' %}selected{% endif %}>Remote</option>
+    </select>
+    <button class="btn btn-primary">Search</button>
+    {% if q or loc or jtype %}<a href="{{ url_for('jobs') }}" class="btn btn-ghost">Clear</a>{% endif %}
+  </form>
+
+  {% if jobs %}
+    <div style="color:var(--muted);font-size:.88rem;margin-bottom:1rem">{{ jobs|length }} job{{ 's' if jobs|length!=1 }} found</div>
+    <div class="jobs-grid">
+      {% for j in jobs %}
+      <div class="job-card {% if j.id in applied %}applied{% endif %}">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem">{{ j.title }}</div>
+            <div style="color:var(--muted);font-size:.88rem;margin-top:.2rem">🏢 {{ j.company }}</div>
+          </div>
+          {% if j.id in applied %}<span class="badge badge-green">✓ Applied</span>{% endif %}
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <span class="badge badge-purple">📍 {{ j.location }}</span>
+          <span class="badge badge-blue">{{ j.job_type }}</span>
+          {% if j.salary %}<span class="badge badge-yellow">💰 {{ j.salary }}</span>{% endif %}
+        </div>
+        <div style="font-size:.88rem;color:#94a3b8;line-height:1.5">{{ j.description[:120] }}{% if j.description|length>120 %}...{% endif %}</div>
+        <div>
+          <div style="font-size:.78rem;color:var(--muted);margin-bottom:.4rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Required Skills</div>
+          <div>{% for sk in j.required_skills.split(',')[:5] if sk.strip() %}
+            <span class="skill-tag" style="font-size:.78rem">{{ sk.strip() }}</span>
+          {% endfor %}</div>
+        </div>
+        <div style="display:flex;gap:.5rem;font-size:.8rem;color:var(--muted)">
+          {% if j.required_experience %}<span>📅 {{ j.required_experience }} exp</span>{% endif %}
+          {% if j.deadline %}<span>⏰ Deadline: {{ j.deadline }}</span>{% endif %}
+        </div>
+        <div style="display:flex;gap:.7rem;margin-top:.3rem">
+          {% if j.id in applied %}
+            <span class="btn btn-ghost btn-sm" style="cursor:default;opacity:.6">✓ Applied</span>
+          {% else %}
+            <a href="{{ url_for('apply_job', job_id=j.id) }}" class="btn btn-primary btn-sm">Apply Now</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty" style="padding:6rem 2rem">
+      <div class="empty-icon">🔍</div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:.5rem">No jobs found</div>
+      <div class="empty-text">Try adjusting your search filters</div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

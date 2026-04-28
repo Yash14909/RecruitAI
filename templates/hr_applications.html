@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Applications — RecruitAI{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+    <div><div class="page-title">Candidate Applications</div><div class="page-sub">Ranked by AI match score</div></div>
+    <form method="GET" style="display:flex;gap:.7rem">
+      <select name="job_id" class="form-control" onchange="this.form.submit()">
+        <option value="">All Jobs</option>
+        {% for j in jobs %}<option value="{{ j.id }}" {% if selected_job|string == j.id|string %}selected{% endif %}>{{ j.title }}</option>{% endfor %}
+      </select>
+    </form>
+  </div>
+
+  {% if apps %}
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Candidate</th><th>Job</th><th>AI Score</th><th>Feedback</th><th>Status</th><th>Applied</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for a in apps %}
+      <tr>
+        <td style="font-weight:700;color:var(--muted)">{{ loop.index }}</td>
+        <td>
+          <div style="font-weight:600">{{ a.name }}</div>
+          <div style="color:var(--muted);font-size:.78rem">{{ a.email }}</div>
+          <div style="color:var(--muted);font-size:.78rem">{{ a.mobile }}</div>
+        </td>
+        <td style="font-size:.88rem">{{ a.title }}</td>
+        <td>
+          <div style="font-weight:800;font-size:1.1rem;color:{% if a.ai_score>=70 %}var(--success){% elif a.ai_score>=40 %}var(--warning){% else %}var(--danger){% endif %}">{{ a.ai_score }}%</div>
+          <div class="score-bar" style="width:80px;margin-top:.3rem"><div class="score-fill {% if a.ai_score>=70 %}score-high{% elif a.ai_score>=40 %}score-mid{% else %}score-low{% endif %}" style="width:{{ a.ai_score }}%"></div></div>
+        </td>
+        <td style="font-size:.78rem;color:var(--muted);max-width:200px">{{ a.ai_feedback }}</td>
+        <td>
+          <select class="form-control" style="padding:.3rem .6rem;font-size:.82rem" onchange="updateStatus({{ a.id }}, this.value)">
+            <option {% if a.status=='applied' %}selected{% endif %}>applied</option>
+            <option {% if a.status=='shortlisted' %}selected{% endif %}>shortlisted</option>
+            <option {% if a.status=='rejected' %}selected{% endif %}>rejected</option>
+            <option {% if a.status=='hired' %}selected{% endif %}>hired</option>
+          </select>
+        </td>
+        <td style="color:var(--muted);font-size:.82rem">{{ a.applied_at[:10] }}</td>
+        <td>
+          <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+            <a href="{{ url_for('hr_view_candidate', user_id=a.user_id) }}" class="btn btn-ghost btn-sm">Profile</a>
+            <a href="{{ url_for('view_resume', user_id=a.user_id) }}" target="_blank" class="btn btn-outline btn-sm">Resume</a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div></div>
+  {% else %}
+    <div class="empty card" style="padding:4rem"><div class="empty-icon">📭</div><div class="empty-text">No applications found for this filter.</div></div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_js %}
+function updateStatus(id, status){
+  fetch('/hr/update_status/'+id+'/'+status).then(()=>{});
+}
+{% endblock %}

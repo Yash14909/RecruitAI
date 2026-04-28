@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}My Job Posts — RecruitAI{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:center">
+    <div><div class="page-title">My Job Posts</div><div class="page-sub">Manage all your job listings</div></div>
+    <a href="{{ url_for('hr_post_job') }}" class="btn btn-primary">+ Post New Job</a>
+  </div>
+  {% if jobs %}
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Job Title</th><th>Company</th><th>Location</th><th>Type</th><th>Applications</th><th>Status</th><th>Posted</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for j in jobs %}
+      <tr>
+        <td><div style="font-weight:600">{{ j.title }}</div></td>
+        <td>{{ j.company }}</td>
+        <td>{{ j.location }}</td>
+        <td><span class="badge badge-blue">{{ j.job_type }}</span></td>
+        <td>
+          <a href="{{ url_for('hr_applications', job_id=j.id) }}" style="color:var(--primary);font-weight:700;text-decoration:none">{{ j.app_count }}</a>
+          {% if j.app_count > 0 %}
+          &nbsp;<a href="{{ url_for('hr_ranking', job_id=j.id) }}" class="btn btn-ghost btn-sm">🏆 Rank</a>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{{ url_for('toggle_job', job_id=j.id) }}" class="badge {% if j.status=='active' %}badge-green{% else %}badge-red{% endif %}" style="cursor:pointer;text-decoration:none">
+            {% if j.status=='active' %}● Active{% else %}○ Inactive{% endif %}
+          </a>
+        </td>
+        <td style="color:var(--muted);font-size:.82rem">{{ j.created_at[:10] }}</td>
+        <td style="display:flex;gap:.4rem">
+          <a href="{{ url_for('hr_applications', job_id=j.id) }}" class="btn btn-ghost btn-sm">Applications</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div></div>
+  {% else %}
+    <div class="empty card" style="padding:4rem"><div class="empty-icon">📋</div><div class="empty-text">No jobs posted yet. <a href="{{ url_for('hr_post_job') }}" style="color:var(--primary)">Post your first job</a></div></div>
+  {% endif %}
+</div>
+{% endblock %}

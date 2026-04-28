@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — RecruitAI{% endblock %}
+{% block extra_css %}
+.job-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem;
+  display: flex; flex-direction: column; gap: .6rem; transition: transform .2s, border-color .2s; }
+.job-card:hover { transform: translateY(-2px); border-color: var(--primary); }
+.job-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+.job-meta { display: flex; gap: .5rem; flex-wrap: wrap; }
+.app-status { padding: .15rem .6rem; border-radius: 99px; font-size: .75rem; font-weight: 600; }
+.s-applied { background: rgba(59,130,246,.15); color: #60a5fa; }
+.s-shortlisted { background: rgba(16,185,129,.15); color: #34d399; }
+.s-rejected { background: rgba(239,68,68,.15); color: #f87171; }
+.s-hired { background: rgba(139,92,246,.15); color: #a78bfa; }
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div class="page-title">👋 Hello, {{ session.name }}</div>
+      <div class="page-sub">Your recruitment journey at a glance</div>
+    </div>
+    <div style="display:flex;gap:.7rem">
+      <a href="{{ url_for('profile') }}" class="btn btn-ghost">Edit Profile</a>
+      <a href="{{ url_for('jobs') }}" class="btn btn-primary">Browse Jobs</a>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="grid-4" style="margin-bottom:2rem">
+    <div class="stat-card stat-primary">
+      <div class="stat-label">Applications</div>
+      <div class="stat-value">{{ apps|length }}</div>
+      <div class="stat-sub">Total submitted</div>
+    </div>
+    <div class="stat-card stat-green">
+      <div class="stat-label">Shortlisted</div>
+      <div class="stat-value">{{ apps|selectattr('status','equalto','shortlisted')|list|length }}</div>
+      <div class="stat-sub">In progress</div>
+    </div>
+    <div class="stat-card stat-purple">
+      <div class="stat-label">Hired</div>
+      <div class="stat-value">{{ apps|selectattr('status','equalto','hired')|list|length }}</div>
+      <div class="stat-sub">Offers received</div>
+    </div>
+    <div class="stat-card stat-yellow">
+      <div class="stat-label">Profile</div>
+      <div class="stat-value">{% if profile %}✓{% else %}—{% endif %}</div>
+      <div class="stat-sub">{% if profile %}Complete{% else %}Incomplete{% endif %}</div>
+    </div>
+  </div>
+
+  <div class="layout-sidebar">
+    <!-- LEFT: Applications -->
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">My Applications</div>
+          <span class="badge badge-blue">{{ apps|length }}</span>
+        </div>
+        {% if apps %}
+          {% for a in apps %}
+          <div style="border-bottom:1px solid var(--border);padding:.9rem 0;last-child:no-border">
+            <div style="display:flex;justify-content:space-between;align-items:start">
+              <div>
+                <div style="font-weight:600;font-size:.95rem">{{ a.title }}</div>
+                <div style="color:var(--muted);font-size:.82rem">{{ a.company }}</div>
+              </div>
+              <span class="app-status s-{{ a.status }}">{{ a.status|capitalize }}</span>
+            </div>
+            <div style="margin-top:.5rem">
+              <div style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-bottom:.2rem">
+                <span>AI Match Score</span><span style="font-weight:700;color:{% if a.ai_score>=70 %}var(--success){% elif a.ai_score>=40 %}var(--warning){% else %}var(--danger){% endif %}">{{ a.ai_score }}%</span>
+              </div>
+              <div class="score-bar"><div class="score-fill {% if a.ai_score>=70 %}score-high{% elif a.ai_score>=40 %}score-mid{% else %}score-low{% endif %}" style="width:{{ a.ai_score }}%"></div></div>
+            </div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:.4rem">Applied {{ a.applied_at[:10] }}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty"><div class="empty-icon">📭</div><div class="empty-text">No applications yet. <a href="{{ url_for('jobs') }}" style="color:var(--primary)">Browse jobs</a></div></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- RIGHT: Skills + Job Suggestions -->
+    <div style="display:flex;flex-direction:column;gap:1.2rem">
+      <div class="card">
+        <div class="card-header"><div class="card-title">My Skills</div><a href="{{ url_for('profile') }}" class="btn btn-ghost btn-sm">+ Add</a></div>
+        {% if skills %}
+          <div>{% for s in skills %}
+            <span class="skill-tag">
+              <span class="skill-dot dot-{{ s.level|lower }}"></span>{{ s.skill_name }}
+              <span style="color:var(--muted);font-size:.75rem">({{ s.level }})</span>
+            </span>
+          {% endfor %}</div>
+        {% else %}
+          <div style="color:var(--muted);font-size:.9rem">No skills added. <a href="{{ url_for('profile') }}" style="color:var(--primary)">Add skills</a></div>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Suggested Jobs</div><a href="{{ url_for('jobs') }}" style="color:var(--primary);font-size:.85rem">View all →</a></div>
+        <div style="display:flex;flex-direction:column;gap:.8rem">
+          {% for j in jobs %}
+          <div class="job-card">
+            <div class="job-title">{{ j.title }}</div>
+            <div class="job-meta">
+              <span class="badge badge-blue">{{ j.company }}</span>
+              <span class="badge badge-purple">{{ j.location }}</span>
+              <span class="badge badge-green">{{ j.job_type }}</span>
+            </div>
+            <div style="font-size:.82rem;color:var(--muted)">Skills: {{ j.required_skills[:50] }}{% if j.required_skills|length > 50 %}...{% endif %}</div>
+            <a href="{{ url_for('apply_job', job_id=j.id) }}" class="btn btn-primary btn-sm" style="align-self:flex-start">Apply Now</a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
