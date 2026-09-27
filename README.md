@@ -1,4 +1,4 @@
-# ⬡ RecruitAI — Jobs hit different when AI does the matching
+# RecruitAI — Jobs hit different when AI does the matching
 
 > **tl;dr** — post a job, get ranked candidates. build a profile, get matched to roles. AI handles the boring part. you handle the vibe check.
 
